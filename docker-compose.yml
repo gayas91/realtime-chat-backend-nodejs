@@ -3,7 +3,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: realtime-chat-api
     restart: unless-stopped
     env_file:
       - .env

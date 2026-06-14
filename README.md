@@ -405,6 +405,24 @@ typing:{conversationId}:{userId} = true
 TTL 5 seconds
 ```
 
+## Socket.IO Horizontal Scaling
+
+Socket.IO uses the Redis adapter for cross-instance room broadcasts. The app creates dedicated Redis pub/sub clients with `redisClient.duplicate()` so presence and normal Redis commands keep using the existing Redis client.
+
+Run multiple API containers locally:
+
+```bash
+docker compose up --scale api=2
+```
+
+When scaling with Docker Compose, the API service cannot use a fixed `container_name`. It has been omitted so Compose can create multiple API containers.
+
+Host port mapping also needs care: only one container can bind a host port such as `5001:5000`. For local scaling, either remove/comment the API `ports` mapping and access instances through an external load balancer, or run separate Compose overrides with different host ports.
+
+The Redis adapter is required at startup. If its pub/sub clients cannot connect, the API startup fails clearly instead of silently running without cross-instance Socket.IO delivery.
+
+This project does not include Kubernetes, Nginx/load balancing, cloud deployment, CI/CD, queues, or push notifications.
+
 ## Message Edit And Delete
 
 Message edit and delete APIs require:
@@ -589,6 +607,7 @@ Included:
 - Socket.IO typing indicators
 - Message edit and soft delete
 - Group chat management
+- Socket.IO Redis adapter scaling
 
 Not included yet:
 
@@ -606,4 +625,8 @@ Not included yet:
 - Reactions
 - Threads
 - Push notifications
-- Redis adapter scaling
+- Kubernetes deployment
+- Nginx load balancer
+- AWS deployment
+- CI/CD
+- Message queue

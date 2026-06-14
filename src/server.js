@@ -14,7 +14,7 @@ const startServer = async () => {
   try {
     await connectMongoDB();
     await connectRedis();
-    io = initializeSocketServer(server);
+    io = await initializeSocketServer(server);
 
     server.listen(config.port, () => {
       logger.info(`${config.appName} listening on port ${config.port}`);
@@ -32,6 +32,7 @@ const shutdown = async (signal) => {
     try {
       if (io) {
         io.close();
+        await io.closeRedisAdapterClients?.();
       }
       await disconnectRedis();
       await disconnectMongoDB();
