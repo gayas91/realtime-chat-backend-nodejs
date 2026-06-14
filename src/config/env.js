@@ -14,7 +14,8 @@ const envSchema = Joi.object({
   REDIS_URL: Joi.string()
     .uri({ scheme: ['redis', 'rediss'] })
     .required(),
-  JWT_SECRET: Joi.string().min(32).required(),
+  JWT_ACCESS_SECRET: Joi.string().min(32).required(),
+  JWT_REFRESH_SECRET: Joi.string().min(32).required(),
   JWT_ACCESS_EXPIRES_IN: Joi.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: Joi.string().default('7d'),
   CORS_ORIGIN: Joi.string().default('*'),
@@ -46,7 +47,8 @@ module.exports = {
     url: envVars.REDIS_URL,
   },
   jwt: {
-    secret: envVars.JWT_SECRET,
+    accessSecret: envVars.JWT_ACCESS_SECRET,
+    refreshSecret: envVars.JWT_REFRESH_SECRET,
     accessExpiresIn: envVars.JWT_ACCESS_EXPIRES_IN,
     refreshExpiresIn: envVars.JWT_REFRESH_EXPIRES_IN,
   },
