@@ -7,6 +7,7 @@ const envSchema = Joi.object({
   NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
   PORT: Joi.number().port().default(5000),
   APP_NAME: Joi.string().default('realtime-chat-backend-nodejs'),
+  APP_BASE_URL: Joi.string().uri().default('http://localhost:5001'),
   API_PREFIX: Joi.string().default('/api/v1'),
   MONGODB_URI: Joi.string()
     .uri({ scheme: ['mongodb', 'mongodb+srv'] })
@@ -37,6 +38,7 @@ module.exports = {
   isProduction: envVars.NODE_ENV === 'production',
   port: envVars.PORT,
   appName: envVars.APP_NAME,
+  appBaseUrl: envVars.APP_BASE_URL,
   apiPrefix: envVars.API_PREFIX,
   corsOrigin: envVars.CORS_ORIGIN,
   logLevel: envVars.LOG_LEVEL,

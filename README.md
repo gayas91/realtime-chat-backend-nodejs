@@ -247,6 +247,33 @@ Content-Type: application/json
 }
 ```
 
+Upload a file:
+
+```http
+POST /api/v1/uploads
+Content-Type: multipart/form-data
+
+file=@photo.png
+```
+
+Create a file message:
+
+```http
+POST /api/v1/conversations/CONVERSATION_ID/messages/file
+Content-Type: multipart/form-data
+
+file=@photo.png
+content=Optional caption
+```
+
+Files are stored locally in `uploads/` and served from:
+
+```text
+http://localhost:5001/uploads/<filename>
+```
+
+Allowed uploads include JPEG, PNG, WebP, PDF, DOC, DOCX, ZIP, MP3, and WAV files up to 10MB.
+
 Only participants can fetch or create messages.
 
 ### Messaging Socket Events
@@ -641,6 +668,7 @@ Included:
 - Redis-backed user presence
 - Direct and group conversations
 - MongoDB message persistence
+- Local file uploads and attachment messages
 - Basic realtime message delivery
 - Delivered and read receipts
 - Socket.IO typing indicators
@@ -651,7 +679,14 @@ Included:
 
 Not included yet:
 
-- File uploads
+- AWS S3
+- Cloudinary
+- CDN
+- Signed URLs
+- Image resizing
+- Virus scanning
+- Thumbnails
+- File delete API
 - Delete for me
 - Edit history
 - Attachments

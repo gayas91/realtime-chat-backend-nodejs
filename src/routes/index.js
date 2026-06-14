@@ -4,6 +4,7 @@ const authRoutes = require('./auth.routes');
 const conversationRoutes = require('./conversation.routes');
 const groupRoutes = require('./group.routes');
 const healthRoutes = require('./health.routes');
+const uploadRoutes = require('./upload.routes');
 const { authenticate } = require('../middlewares/auth.middleware');
 const validate = require('../middlewares/validate.middleware');
 const messageValidator = require('../validators/message.validator');
@@ -13,6 +14,7 @@ const router = express.Router();
 router.use('/auth', authRoutes);
 router.use('/conversations', conversationRoutes);
 router.use('/groups', groupRoutes);
+router.use('/uploads', uploadRoutes);
 router.get(
   '/messages/search',
   authenticate,

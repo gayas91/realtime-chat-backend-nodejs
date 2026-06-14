@@ -15,6 +15,9 @@ RUN if [ -f package-lock.json ]; then \
 
 COPY --chown=node:node . .
 
+RUN mkdir -p /usr/src/app/uploads \
+    && chown -R node:node /usr/src/app/uploads
+
 USER node
 
 EXPOSE 5000

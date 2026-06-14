@@ -1,5 +1,8 @@
 const messageService = require('../services/message.service');
+const uploadService = require('../services/upload.service');
+const socketEvents = require('../constants/socketEvents');
 const asyncHandler = require('../utils/asyncHandler');
+const { emitToConversationRoom } = require('../sockets/conversation.socket');
 
 const getMessages = asyncHandler(async (req, res) => {
   const messages = await messageService.getConversationMessages(
@@ -19,6 +22,27 @@ const createMessage = asyncHandler(async (req, res) => {
   const message = await messageService.createMessage(req.params.conversationId, req.user.id, {
     content: req.body.content,
     type: req.body.type,
+  });
+
+  res.status(201).json({
+    success: true,
+    data: {
+      message,
+    },
+  });
+});
+
+const createFileMessage = asyncHandler(async (req, res) => {
+  const file = uploadService.getFileMetadata(req.file);
+  const message = await messageService.createMessage(req.params.conversationId, req.user.id, {
+    content: req.body.content || file.originalName,
+    type: uploadService.getMessageTypeFromMimeType(file.mimeType),
+    attachments: [file],
+  });
+
+  emitToConversationRoom(req.params.conversationId, socketEvents.MESSAGE_NEW, {
+    conversationId: req.params.conversationId,
+    message,
   });
 
   res.status(201).json({
@@ -101,6 +125,7 @@ const markConversationAsRead = asyncHandler(async (req, res) => {
 module.exports = {
   getMessages,
   createMessage,
+  createFileMessage,
   searchMessages,
   searchConversationMessages,
   editMessage,

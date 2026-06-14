@@ -10,7 +10,7 @@ const { getConversationRoom } = require('./conversation.socket');
 const messageSendSchema = Joi.object({
   conversationId: Joi.string().hex().length(24).required(),
   content: Joi.string().trim().min(1).max(5000).required(),
-  type: Joi.string().valid('text', 'image', 'file', 'system').default('text'),
+  type: Joi.string().valid('text', 'image', 'file', 'audio', 'system').default('text'),
 });
 
 const messageStatusSchema = Joi.object({

@@ -693,6 +693,133 @@ Error response:
 }
 ```
 
+### Upload File
+
+| Field | Value |
+| --- | --- |
+| API name | Upload File |
+| Method | POST |
+| Endpoint | `/api/v1/uploads` |
+| Auth required | Yes |
+
+Headers:
+
+```http
+Authorization: Bearer ACCESS_TOKEN
+Content-Type: multipart/form-data
+```
+
+Path params: none
+
+Query params: none
+
+Request body:
+
+```text
+file = local file
+```
+
+Curl:
+
+```bash
+curl -X POST "http://localhost:5001/api/v1/uploads" \
+  -H "Authorization: Bearer ACCESS_TOKEN" \
+  -F "file=@photo.png"
+```
+
+Success response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "file": {
+      "url": "http://localhost:5001/uploads/photo-123456789.png",
+      "fileName": "photo-123456789.png",
+      "originalName": "photo.png",
+      "mimeType": "image/png",
+      "size": 12345
+    }
+  }
+}
+```
+
+Error response:
+
+```json
+{
+  "success": false,
+  "message": "File type is not allowed"
+}
+```
+
+### Create File Message
+
+| Field | Value |
+| --- | --- |
+| API name | Create File Message |
+| Method | POST |
+| Endpoint | `/api/v1/conversations/:conversationId/messages/file` |
+| Auth required | Yes |
+
+Headers:
+
+```http
+Authorization: Bearer ACCESS_TOKEN
+Content-Type: multipart/form-data
+```
+
+Path params:
+
+```text
+conversationId = CONVERSATION_ID
+```
+
+Query params: none
+
+Request body:
+
+```text
+file = local file
+content = optional caption
+```
+
+Curl:
+
+```bash
+curl -X POST "http://localhost:5001/api/v1/conversations/CONVERSATION_ID/messages/file" \
+  -H "Authorization: Bearer ACCESS_TOKEN" \
+  -F "file=@photo.png" \
+  -F "content=Optional caption"
+```
+
+Success response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "message": {
+      "_id": "MESSAGE_ID",
+      "conversationId": "CONVERSATION_ID",
+      "content": "Optional caption",
+      "type": "image",
+      "attachments": [
+        {
+          "url": "http://localhost:5001/uploads/photo-123456789.png",
+          "fileName": "photo-123456789.png",
+          "originalName": "photo.png",
+          "mimeType": "image/png",
+          "size": 12345
+        }
+      ],
+      "status": "sent",
+      "isDeleted": false
+    }
+  }
+}
+```
+
 ## Read Receipts
 
 ### Mark Message Read

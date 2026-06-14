@@ -20,7 +20,16 @@ const createMessageSchema = Joi.object({
   }).required(),
   body: Joi.object({
     content: Joi.string().trim().min(1).max(5000).required(),
-    type: Joi.string().valid('text', 'image', 'file', 'system').default('text'),
+    type: Joi.string().valid('text', 'image', 'file', 'audio', 'system').default('text'),
+  }).required(),
+}).unknown(true);
+
+const createFileMessageSchema = Joi.object({
+  params: Joi.object({
+    conversationId: objectId.required(),
+  }).required(),
+  body: Joi.object({
+    content: Joi.string().trim().min(1).max(5000).optional(),
   }).required(),
 }).unknown(true);
 
@@ -56,6 +65,7 @@ module.exports = {
   conversationIdParamSchema,
   messageIdParamSchema,
   createMessageSchema,
+  createFileMessageSchema,
   updateMessageSchema,
   searchMessagesSchema,
   searchConversationMessagesSchema,

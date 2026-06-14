@@ -83,7 +83,11 @@ const searchConversationMessages = async (conversationId, currentUserId, { q, pa
   });
 };
 
-const createMessage = async (conversationId, senderId, { content, type = 'text' }) => {
+const createMessage = async (
+  conversationId,
+  senderId,
+  { content, type = 'text', attachments = [] }
+) => {
   const conversation = await conversationService.ensureParticipant(conversationId, senderId);
 
   const message = await Message.create({
@@ -91,6 +95,7 @@ const createMessage = async (conversationId, senderId, { content, type = 'text' 
     senderId,
     content,
     type,
+    attachments,
   });
 
   conversation.lastMessage = message.id;

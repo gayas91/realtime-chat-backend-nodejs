@@ -3,6 +3,23 @@ const conversationService = require('../services/conversation.service');
 const logger = require('../utils/logger');
 
 const getConversationRoom = (conversationId) => `conversation:${conversationId}`;
+let socketServer = null;
+
+const registerConversationSocketServer = (io) => {
+  socketServer = io;
+};
+
+const emitToConversationRoom = (conversationId, eventName, payload) => {
+  if (!socketServer) {
+    logger.warn('Socket.IO server is not initialized for conversation event', {
+      conversationId,
+      eventName,
+    });
+    return;
+  }
+
+  socketServer.to(getConversationRoom(conversationId)).emit(eventName, payload);
+};
 
 const registerConversationHandlers = (_io, socket) => {
   void _io;
@@ -60,5 +77,7 @@ const registerConversationHandlers = (_io, socket) => {
 
 module.exports = {
   getConversationRoom,
+  registerConversationSocketServer,
+  emitToConversationRoom,
   registerConversationHandlers,
 };
