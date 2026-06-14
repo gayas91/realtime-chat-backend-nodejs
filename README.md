@@ -358,6 +358,53 @@ Mark a conversation read:
 socket.emit('conversation:read', { conversationId: 'CONVERSATION_ID' }, console.log);
 ```
 
+## Typing Indicators
+
+Typing indicators are Socket.IO-only and are not persisted in MongoDB. The sender must be an authenticated participant of the conversation. Events are emitted to other sockets in `conversation:{conversationId}`, not back to the sender.
+
+Start typing:
+
+```js
+socket.emit(
+  'typing:start',
+  {
+    conversationId: 'CONVERSATION_ID',
+  },
+  console.log
+);
+```
+
+Stop typing:
+
+```js
+socket.emit(
+  'typing:stop',
+  {
+    conversationId: 'CONVERSATION_ID',
+  },
+  console.log
+);
+```
+
+Listen for typing events:
+
+```js
+socket.on('typing:start', ({ conversationId, userId }) => {
+  console.log(`${userId} is typing in ${conversationId}`);
+});
+
+socket.on('typing:stop', ({ conversationId, userId }) => {
+  console.log(`${userId} stopped typing in ${conversationId}`);
+});
+```
+
+Redis stores short-lived typing state:
+
+```text
+typing:{conversationId}:{userId} = true
+TTL 5 seconds
+```
+
 ## Current Scope
 
 Included:
@@ -380,10 +427,10 @@ Included:
 - MongoDB message persistence
 - Basic realtime message delivery
 - Delivered and read receipts
+- Socket.IO typing indicators
 
 Not included yet:
 
-- Typing indicators
 - File uploads
 - Message edit
 - Message delete
