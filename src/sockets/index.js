@@ -4,6 +4,8 @@ const config = require('../config/env');
 const socketEvents = require('../constants/socketEvents');
 const presenceService = require('../services/presence.service');
 const logger = require('../utils/logger');
+const { registerConversationHandlers } = require('./conversation.socket');
+const registerMessageHandlers = require('./message.socket');
 const registerPresenceHandlers = require('./presence.socket');
 const socketAuth = require('./socket.auth');
 
@@ -33,6 +35,8 @@ const initializeSocketServer = (httpServer) => {
       }
 
       registerPresenceHandlers(io, socket);
+      registerConversationHandlers(io, socket);
+      registerMessageHandlers(io, socket);
     } catch (error) {
       logger.error('Failed to initialize socket connection', {
         socketId: socket.id,

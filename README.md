@@ -182,6 +182,110 @@ Response:
 }
 ```
 
+## Conversations And Messages
+
+All conversation and message APIs require:
+
+```http
+Authorization: Bearer jwt-access-token
+```
+
+### Conversation APIs
+
+Create or return an existing direct conversation:
+
+```http
+POST /api/v1/conversations/direct
+Content-Type: application/json
+
+{
+  "participantId": "USER_ID"
+}
+```
+
+Create a group conversation:
+
+```http
+POST /api/v1/conversations/group
+Content-Type: application/json
+
+{
+  "name": "Project Team",
+  "participantIds": ["USER_ID_2", "USER_ID_3"]
+}
+```
+
+List conversations:
+
+```http
+GET /api/v1/conversations
+```
+
+Get one conversation:
+
+```http
+GET /api/v1/conversations/CONVERSATION_ID
+```
+
+### Message APIs
+
+List conversation messages:
+
+```http
+GET /api/v1/conversations/CONVERSATION_ID/messages
+```
+
+Create a message:
+
+```http
+POST /api/v1/conversations/CONVERSATION_ID/messages
+Content-Type: application/json
+
+{
+  "content": "Hello from REST",
+  "type": "text"
+}
+```
+
+Only participants can fetch or create messages.
+
+### Messaging Socket Events
+
+- `conversation:join` - join `conversation:{conversationId}` after participant validation
+- `conversation:leave` - leave a conversation room
+- `message:send` - persist a message, then emit it to the room
+- `message:new` - emitted to `conversation:{conversationId}` after MongoDB save
+- `message:delivered` - emitted when online participants can be marked delivered
+
+Join a conversation:
+
+```js
+socket.emit(
+  'conversation:join',
+  {
+    conversationId: 'CONVERSATION_ID',
+  },
+  console.log
+);
+```
+
+Send a realtime message:
+
+```js
+socket.emit(
+  'message:send',
+  {
+    conversationId: 'CONVERSATION_ID',
+    content: 'Hello from Socket.IO',
+    type: 'text',
+  },
+  console.log
+);
+
+socket.on('message:new', console.log);
+socket.on('message:delivered', console.log);
+```
+
 ## Current Scope
 
 Included:
@@ -200,12 +304,16 @@ Included:
 - JWT authentication APIs
 - Socket.IO JWT authentication
 - Redis-backed user presence
+- Direct and group conversations
+- MongoDB message persistence
+- Basic realtime message delivery
 
 Not included yet:
 
-- Chat models
-- Message sending
-- Conversation rooms
 - Read receipts
 - Typing indicators
-- Group chat
+- File uploads
+- Message edit
+- Message delete
+- Advanced group admin management
+- Push notifications
