@@ -33,9 +33,30 @@ const updateMessageSchema = Joi.object({
   }).required(),
 }).unknown(true);
 
+const searchMessagesSchema = Joi.object({
+  query: Joi.object({
+    q: Joi.string().trim().min(1).max(120).required(),
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(20),
+  }).required(),
+}).unknown(true);
+
+const searchConversationMessagesSchema = Joi.object({
+  params: Joi.object({
+    conversationId: objectId.required(),
+  }).required(),
+  query: Joi.object({
+    q: Joi.string().trim().min(1).max(120).required(),
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(20),
+  }).required(),
+}).unknown(true);
+
 module.exports = {
   conversationIdParamSchema,
   messageIdParamSchema,
   createMessageSchema,
   updateMessageSchema,
+  searchMessagesSchema,
+  searchConversationMessagesSchema,
 };

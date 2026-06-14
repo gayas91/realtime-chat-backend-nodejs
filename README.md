@@ -485,6 +485,45 @@ socket.emit(
 socket.on('message:deleted', console.log);
 ```
 
+## Message Search
+
+Message search APIs require:
+
+```http
+Authorization: Bearer jwt-access-token
+```
+
+Global search across conversations where the current user is a participant:
+
+```http
+GET /api/v1/messages/search?q=hello&page=1&limit=20
+```
+
+Conversation-specific search:
+
+```http
+GET /api/v1/conversations/CONVERSATION_ID/messages/search?q=hello&page=1&limit=20
+```
+
+Search uses a MongoDB text index on `Message.content`, searches only text messages, excludes deleted messages, and returns newest results first.
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "messages": [],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 0,
+      "totalPages": 0
+    }
+  }
+}
+```
+
 ## Group Chat Management
 
 Group management APIs require:
@@ -606,6 +645,7 @@ Included:
 - Delivered and read receipts
 - Socket.IO typing indicators
 - Message edit and soft delete
+- Secure MongoDB text message search
 - Group chat management
 - Socket.IO Redis adapter scaling
 
@@ -625,6 +665,11 @@ Not included yet:
 - Reactions
 - Threads
 - Push notifications
+- Elasticsearch
+- Redis search
+- Typo-tolerant search
+- Attachment search
+- Search highlights
 - Kubernetes deployment
 - Nginx load balancer
 - AWS deployment

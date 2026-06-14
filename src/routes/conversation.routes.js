@@ -5,6 +5,7 @@ const messageController = require('../controllers/message.controller');
 const { authenticate } = require('../middlewares/auth.middleware');
 const validate = require('../middlewares/validate.middleware');
 const conversationValidator = require('../validators/conversation.validator');
+const messageValidator = require('../validators/message.validator');
 const messageRoutes = require('./message.routes');
 
 const router = express.Router();
@@ -31,6 +32,11 @@ router.post(
   '/:conversationId/read',
   validate(conversationValidator.conversationIdParamSchema),
   messageController.markConversationAsRead
+);
+router.get(
+  '/:conversationId/messages/search',
+  validate(messageValidator.searchConversationMessagesSchema),
+  messageController.searchConversationMessages
 );
 router.use('/:conversationId/messages', messageRoutes);
 

@@ -1,4 +1,5 @@
 const Message = require('../models/Message');
+const Conversation = require('../models/Conversation');
 const ApiError = require('../utils/ApiError');
 const conversationService = require('./conversation.service');
 
@@ -17,6 +18,69 @@ const getConversationMessages = async (conversationId, currentUserId) => {
       deletedFor: { $ne: currentUserId },
     }).sort({ createdAt: 1 })
   );
+};
+
+const buildSearchPagination = (page, limit, total) => ({
+  page,
+  limit,
+  total,
+  totalPages: Math.ceil(total / limit),
+});
+
+const searchMessagesByQuery = async ({ query, conversationIds, page, limit, currentUserId }) => {
+  const skip = (page - 1) * limit;
+  const filter = {
+    $text: { $search: query },
+    conversationId: { $in: conversationIds },
+    type: 'text',
+    isDeleted: false,
+    deletedFor: { $ne: currentUserId },
+  };
+
+  const [messages, total] = await Promise.all([
+    populateMessage(Message.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit)),
+    Message.countDocuments(filter),
+  ]);
+
+  return {
+    messages,
+    pagination: buildSearchPagination(page, limit, total),
+  };
+};
+
+const searchUserMessages = async (currentUserId, { q, page, limit }) => {
+  const conversations = await Conversation.find({
+    participants: currentUserId,
+    isActive: true,
+  }).select('_id');
+  const conversationIds = conversations.map((conversation) => conversation.id);
+
+  if (!conversationIds.length) {
+    return {
+      messages: [],
+      pagination: buildSearchPagination(page, limit, 0),
+    };
+  }
+
+  return searchMessagesByQuery({
+    query: q,
+    conversationIds,
+    page,
+    limit,
+    currentUserId,
+  });
+};
+
+const searchConversationMessages = async (conversationId, currentUserId, { q, page, limit }) => {
+  await conversationService.ensureParticipant(conversationId, currentUserId);
+
+  return searchMessagesByQuery({
+    query: q,
+    conversationIds: [conversationId],
+    page,
+    limit,
+    currentUserId,
+  });
 };
 
 const createMessage = async (conversationId, senderId, { content, type = 'text' }) => {
@@ -214,6 +278,8 @@ const getParticipantIds = (conversation) =>
 
 module.exports = {
   getConversationMessages,
+  searchUserMessages,
+  searchConversationMessages,
   createMessage,
   editMessage,
   deleteMessage,

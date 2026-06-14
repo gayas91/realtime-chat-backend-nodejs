@@ -29,6 +29,28 @@ const createMessage = asyncHandler(async (req, res) => {
   });
 });
 
+const searchMessages = asyncHandler(async (req, res) => {
+  const result = await messageService.searchUserMessages(req.user.id, req.query);
+
+  res.status(200).json({
+    success: true,
+    data: result,
+  });
+});
+
+const searchConversationMessages = asyncHandler(async (req, res) => {
+  const result = await messageService.searchConversationMessages(
+    req.params.conversationId,
+    req.user.id,
+    req.query
+  );
+
+  res.status(200).json({
+    success: true,
+    data: result,
+  });
+});
+
 const editMessage = asyncHandler(async (req, res) => {
   const message = await messageService.editMessage(req.params.messageId, req.user.id, {
     content: req.body.content,
@@ -79,6 +101,8 @@ const markConversationAsRead = asyncHandler(async (req, res) => {
 module.exports = {
   getMessages,
   createMessage,
+  searchMessages,
+  searchConversationMessages,
   editMessage,
   deleteMessage,
   markMessageAsRead,

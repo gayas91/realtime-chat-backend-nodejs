@@ -13,6 +13,12 @@ const router = express.Router();
 router.use('/auth', authRoutes);
 router.use('/conversations', conversationRoutes);
 router.use('/groups', groupRoutes);
+router.get(
+  '/messages/search',
+  authenticate,
+  validate(messageValidator.searchMessagesSchema),
+  messageController.searchMessages
+);
 router.patch(
   '/messages/:messageId',
   authenticate,
