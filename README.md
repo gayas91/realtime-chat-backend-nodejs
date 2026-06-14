@@ -467,6 +467,103 @@ socket.emit(
 socket.on('message:deleted', console.log);
 ```
 
+## Group Chat Management
+
+Group management APIs require:
+
+```http
+Authorization: Bearer jwt-access-token
+```
+
+Create a group:
+
+```http
+POST /api/v1/groups
+Content-Type: application/json
+
+{
+  "name": "Product Team",
+  "participantIds": ["USER_ID_2", "USER_ID_3"]
+}
+```
+
+The creator is automatically added as a participant and admin. Groups require at least three participants including the creator.
+
+Update group name:
+
+```http
+PATCH /api/v1/groups/GROUP_ID
+Content-Type: application/json
+
+{
+  "name": "Updated Product Team"
+}
+```
+
+Add members:
+
+```http
+POST /api/v1/groups/GROUP_ID/members
+Content-Type: application/json
+
+{
+  "memberIds": ["USER_ID_4"]
+}
+```
+
+Remove a member:
+
+```http
+DELETE /api/v1/groups/GROUP_ID/members/USER_ID
+```
+
+Promote an admin:
+
+```http
+POST /api/v1/groups/GROUP_ID/admins
+Content-Type: application/json
+
+{
+  "userId": "USER_ID"
+}
+```
+
+Remove an admin:
+
+```http
+DELETE /api/v1/groups/GROUP_ID/admins/USER_ID
+```
+
+Leave a group:
+
+```http
+POST /api/v1/groups/GROUP_ID/leave
+```
+
+Only group admins can update groups, add/remove members, and add/remove admins. Direct conversations cannot be modified through group routes.
+
+Group socket broadcasts are emitted to `conversation:{groupId}`:
+
+- `group:updated`
+- `group:member:added`
+- `group:member:removed`
+- `group:admin:added`
+- `group:admin:removed`
+- `group:left`
+
+Listen for updates:
+
+```js
+socket.emit('conversation:join', { conversationId: 'GROUP_ID' }, console.log);
+
+socket.on('group:updated', console.log);
+socket.on('group:member:added', console.log);
+socket.on('group:member:removed', console.log);
+socket.on('group:admin:added', console.log);
+socket.on('group:admin:removed', console.log);
+socket.on('group:left', console.log);
+```
+
 ## Current Scope
 
 Included:
@@ -491,6 +588,7 @@ Included:
 - Delivered and read receipts
 - Socket.IO typing indicators
 - Message edit and soft delete
+- Group chat management
 
 Not included yet:
 
@@ -501,5 +599,11 @@ Not included yet:
 - Moderation
 - Admin delete
 - Time limits for edit or delete
-- Advanced group admin management
+- Group avatar upload
+- Invite links
+- Mute group
+- Pin messages
+- Reactions
+- Threads
 - Push notifications
+- Redis adapter scaling

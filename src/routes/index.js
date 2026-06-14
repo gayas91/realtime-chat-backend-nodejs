@@ -2,6 +2,7 @@ const express = require('express');
 const messageController = require('../controllers/message.controller');
 const authRoutes = require('./auth.routes');
 const conversationRoutes = require('./conversation.routes');
+const groupRoutes = require('./group.routes');
 const healthRoutes = require('./health.routes');
 const { authenticate } = require('../middlewares/auth.middleware');
 const validate = require('../middlewares/validate.middleware');
@@ -11,6 +12,7 @@ const router = express.Router();
 
 router.use('/auth', authRoutes);
 router.use('/conversations', conversationRoutes);
+router.use('/groups', groupRoutes);
 router.patch(
   '/messages/:messageId',
   authenticate,

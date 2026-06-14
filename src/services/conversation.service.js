@@ -126,6 +126,8 @@ const ensureParticipant = async (conversationId, userId) => {
 };
 
 module.exports = {
+  ensureUsersExist,
+  populateConversation,
   createDirectConversation,
   createGroupConversation,
   getUserConversations,

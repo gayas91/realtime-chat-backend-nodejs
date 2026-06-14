@@ -5,6 +5,7 @@ const socketEvents = require('../constants/socketEvents');
 const presenceService = require('../services/presence.service');
 const logger = require('../utils/logger');
 const { registerConversationHandlers } = require('./conversation.socket');
+const { registerGroupSocketServer } = require('./group.socket');
 const registerMessageHandlers = require('./message.socket');
 const registerPresenceHandlers = require('./presence.socket');
 const socketAuth = require('./socket.auth');
@@ -19,6 +20,7 @@ const initializeSocketServer = (httpServer) => {
   });
 
   io.use(socketAuth);
+  registerGroupSocketServer(io);
 
   io.on(socketEvents.CONNECTION, async (socket) => {
     const userId = socket.user.id;

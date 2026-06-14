@@ -18,4 +18,10 @@ module.exports = {
   MESSAGE_DELETED: 'message:deleted',
   TYPING_START: 'typing:start',
   TYPING_STOP: 'typing:stop',
+  GROUP_UPDATED: 'group:updated',
+  GROUP_MEMBER_ADDED: 'group:member:added',
+  GROUP_MEMBER_REMOVED: 'group:member:removed',
+  GROUP_ADMIN_ADDED: 'group:admin:added',
+  GROUP_ADMIN_REMOVED: 'group:admin:removed',
+  GROUP_LEFT: 'group:left',
 };
