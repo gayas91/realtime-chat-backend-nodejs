@@ -29,7 +29,32 @@ const createMessage = asyncHandler(async (req, res) => {
   });
 });
 
+const markMessageAsRead = asyncHandler(async (req, res) => {
+  const message = await messageService.markMessageAsRead(req.params.messageId, req.user.id);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      message,
+    },
+  });
+});
+
+const markConversationAsRead = asyncHandler(async (req, res) => {
+  const result = await messageService.markConversationAsRead(
+    req.params.conversationId,
+    req.user.id
+  );
+
+  res.status(200).json({
+    success: true,
+    data: result,
+  });
+});
+
 module.exports = {
   getMessages,
   createMessage,
+  markMessageAsRead,
+  markConversationAsRead,
 };

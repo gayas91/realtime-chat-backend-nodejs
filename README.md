@@ -286,6 +286,78 @@ socket.on('message:new', console.log);
 socket.on('message:delivered', console.log);
 ```
 
+## Read Receipts
+
+Read receipt APIs require:
+
+```http
+Authorization: Bearer jwt-access-token
+```
+
+Mark one message as read:
+
+```http
+POST /api/v1/messages/MESSAGE_ID/read
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "message": {
+      "_id": "MESSAGE_ID",
+      "status": "read",
+      "readBy": ["USER_ID"]
+    }
+  }
+}
+```
+
+Mark a conversation as read:
+
+```http
+POST /api/v1/conversations/CONVERSATION_ID/read
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "updatedCount": 3
+  }
+}
+```
+
+Socket read receipt events:
+
+- `message:delivered` - mark one message delivered for the socket user
+- `message:read` - mark one message read for the socket user
+- `conversation:read` - mark unread messages in a conversation read for the socket user
+- `message:read:update` - emitted to the conversation room after read updates
+
+Mark delivered:
+
+```js
+socket.emit('message:delivered', { messageId: 'MESSAGE_ID' }, console.log);
+```
+
+Mark one message read:
+
+```js
+socket.emit('message:read', { messageId: 'MESSAGE_ID' }, console.log);
+socket.on('message:read:update', console.log);
+```
+
+Mark a conversation read:
+
+```js
+socket.emit('conversation:read', { conversationId: 'CONVERSATION_ID' }, console.log);
+```
+
 ## Current Scope
 
 Included:
@@ -307,10 +379,10 @@ Included:
 - Direct and group conversations
 - MongoDB message persistence
 - Basic realtime message delivery
+- Delivered and read receipts
 
 Not included yet:
 
-- Read receipts
 - Typing indicators
 - File uploads
 - Message edit

@@ -13,20 +13,34 @@ const messageSendSchema = Joi.object({
   type: Joi.string().valid('text', 'image', 'file', 'system').default('text'),
 });
 
+const messageStatusSchema = Joi.object({
+  messageId: Joi.string().hex().length(24).required(),
+});
+
+const conversationReadSchema = Joi.object({
+  conversationId: Joi.string().hex().length(24).required(),
+});
+
+const validatePayload = (schema, payload) => {
+  const { value, error } = schema.validate(payload, {
+    abortEarly: false,
+    stripUnknown: true,
+  });
+
+  if (error) {
+    const message = error.details.map((detail) => detail.message).join(', ');
+    throw new Error(message);
+  }
+
+  return value;
+};
+
 const registerMessageHandlers = (io, socket) => {
   const userId = socket.user.id;
 
   socket.on(socketEvents.MESSAGE_SEND, async (payload, callback) => {
     try {
-      const { value, error } = messageSendSchema.validate(payload, {
-        abortEarly: false,
-        stripUnknown: true,
-      });
-
-      if (error) {
-        const message = error.details.map((detail) => detail.message).join(', ');
-        throw new Error(message);
-      }
+      const value = validatePayload(messageSendSchema, payload);
 
       const conversation = await conversationService.ensureParticipant(
         value.conversationId,
@@ -72,6 +86,119 @@ const registerMessageHandlers = (io, socket) => {
       }
     } catch (error) {
       logger.error('Failed to send socket message', {
+        socketId: socket.id,
+        userId,
+        conversationId: payload?.conversationId,
+        message: error.message,
+        stack: error.stack,
+      });
+
+      if (typeof callback === 'function') {
+        callback({
+          success: false,
+          message: error.message,
+        });
+      }
+    }
+  });
+
+  socket.on(socketEvents.MESSAGE_DELIVERED, async (payload, callback) => {
+    try {
+      const value = validatePayload(messageStatusSchema, payload);
+      const message = await messageService.markMessageAsDelivered(value.messageId, userId);
+      const conversationId = message.conversationId.toString();
+
+      io.to(getConversationRoom(conversationId)).emit(socketEvents.MESSAGE_DELIVERED, {
+        conversationId,
+        messageId: message.id,
+        deliveredTo: [userId],
+        status: message.status,
+      });
+
+      if (typeof callback === 'function') {
+        callback({
+          success: true,
+          data: {
+            message,
+          },
+        });
+      }
+    } catch (error) {
+      logger.error('Failed to mark socket message delivered', {
+        socketId: socket.id,
+        userId,
+        messageId: payload?.messageId,
+        message: error.message,
+        stack: error.stack,
+      });
+
+      if (typeof callback === 'function') {
+        callback({
+          success: false,
+          message: error.message,
+        });
+      }
+    }
+  });
+
+  socket.on(socketEvents.MESSAGE_READ, async (payload, callback) => {
+    try {
+      const value = validatePayload(messageStatusSchema, payload);
+      const message = await messageService.markMessageAsRead(value.messageId, userId);
+      const conversationId = message.conversationId.toString();
+
+      io.to(getConversationRoom(conversationId)).emit(socketEvents.MESSAGE_READ_UPDATE, {
+        conversationId,
+        messageId: message.id,
+        readBy: [userId],
+        status: message.status,
+      });
+
+      if (typeof callback === 'function') {
+        callback({
+          success: true,
+          data: {
+            message,
+          },
+        });
+      }
+    } catch (error) {
+      logger.error('Failed to mark socket message read', {
+        socketId: socket.id,
+        userId,
+        messageId: payload?.messageId,
+        message: error.message,
+        stack: error.stack,
+      });
+
+      if (typeof callback === 'function') {
+        callback({
+          success: false,
+          message: error.message,
+        });
+      }
+    }
+  });
+
+  socket.on(socketEvents.CONVERSATION_READ, async (payload, callback) => {
+    try {
+      const value = validatePayload(conversationReadSchema, payload);
+      const result = await messageService.markConversationAsRead(value.conversationId, userId);
+
+      io.to(getConversationRoom(value.conversationId)).emit(socketEvents.MESSAGE_READ_UPDATE, {
+        conversationId: value.conversationId,
+        readBy: [userId],
+        updatedCount: result.updatedCount,
+      });
+
+      if (typeof callback === 'function') {
+        callback({
+          success: true,
+          data: result,
+        });
+      }
+    } catch (error) {
+      logger.error('Failed to mark socket conversation read', {
         socketId: socket.id,
         userId,
         conversationId: payload?.conversationId,

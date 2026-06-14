@@ -1,4 +1,5 @@
 const Message = require('../models/Message');
+const ApiError = require('../utils/ApiError');
 const conversationService = require('./conversation.service');
 
 const populateMessage = (query) =>
@@ -34,25 +35,134 @@ const createMessage = async (conversationId, senderId, { content, type = 'text' 
   return populateMessage(Message.findById(message.id));
 };
 
+const hasEveryoneExceptSender = (participantIds, senderId, userIds) => {
+  const trackedUserIds = new Set(userIds.map((userId) => userId.toString()));
+
+  return participantIds
+    .filter((participantId) => participantId !== senderId.toString())
+    .every((participantId) => trackedUserIds.has(participantId));
+};
+
+const getMessageAndConversation = async (messageId, userId) => {
+  const message = await Message.findById(messageId);
+
+  if (!message) {
+    throw new ApiError(404, 'Message not found');
+  }
+
+  const conversation = await conversationService.ensureParticipant(message.conversationId, userId);
+
+  return {
+    message,
+    conversation,
+  };
+};
+
+const markMessageAsDelivered = async (messageId, userId) => {
+  const { message, conversation } = await getMessageAndConversation(messageId, userId);
+
+  if (message.senderId.toString() === userId) {
+    throw new ApiError(400, 'Sender cannot mark own message as delivered');
+  }
+
+  if (!message.deliveredTo.some((deliveredUserId) => deliveredUserId.toString() === userId)) {
+    message.deliveredTo.push(userId);
+  }
+
+  const participantIds = getParticipantIds(conversation);
+
+  if (
+    message.status !== 'read' &&
+    hasEveryoneExceptSender(participantIds, message.senderId, message.deliveredTo)
+  ) {
+    message.status = 'delivered';
+  }
+
+  await message.save();
+
+  return populateMessage(Message.findById(message.id));
+};
+
+const markMessageAsRead = async (messageId, userId) => {
+  const { message, conversation } = await getMessageAndConversation(messageId, userId);
+
+  if (message.senderId.toString() === userId) {
+    throw new ApiError(400, 'Sender cannot mark own message as read');
+  }
+
+  if (!message.readBy.some((readUserId) => readUserId.toString() === userId)) {
+    message.readBy.push(userId);
+  }
+
+  const participantIds = getParticipantIds(conversation);
+
+  if (hasEveryoneExceptSender(participantIds, message.senderId, message.readBy)) {
+    message.status = 'read';
+  }
+
+  await message.save();
+
+  return populateMessage(Message.findById(message.id));
+};
+
+const markConversationAsRead = async (conversationId, userId) => {
+  const conversation = await conversationService.ensureParticipant(conversationId, userId);
+  const messages = await Message.find({
+    conversationId,
+    senderId: { $ne: userId },
+    readBy: { $ne: userId },
+    isDeleted: false,
+  });
+  const participantIds = getParticipantIds(conversation);
+
+  await Promise.all(
+    messages.map(async (message) => {
+      message.readBy.push(userId);
+
+      if (hasEveryoneExceptSender(participantIds, message.senderId, message.readBy)) {
+        message.status = 'read';
+      }
+
+      await message.save();
+    })
+  );
+
+  return {
+    updatedCount: messages.length,
+  };
+};
+
 const markDeliveredForUsers = async (messageId, userIds) => {
   if (!userIds.length) {
     return null;
   }
 
-  const message = await Message.findByIdAndUpdate(
-    messageId,
-    {
-      $addToSet: {
-        deliveredTo: { $each: userIds },
-      },
-      $set: {
-        status: 'delivered',
-      },
-    },
-    {
-      new: true,
-    }
+  const message = await Message.findById(messageId);
+
+  if (!message) {
+    return null;
+  }
+
+  const conversation = await conversationService.ensureParticipant(
+    message.conversationId,
+    message.senderId.toString()
   );
+  const deliveredUserIds = userIds.filter((userId) => userId !== message.senderId.toString());
+
+  deliveredUserIds.forEach((userId) => {
+    if (!message.deliveredTo.some((deliveredUserId) => deliveredUserId.toString() === userId)) {
+      message.deliveredTo.push(userId);
+    }
+  });
+
+  if (
+    message.status !== 'read' &&
+    hasEveryoneExceptSender(getParticipantIds(conversation), message.senderId, message.deliveredTo)
+  ) {
+    message.status = 'delivered';
+  }
+
+  await message.save();
 
   return message;
 };
@@ -63,6 +173,9 @@ const getParticipantIds = (conversation) =>
 module.exports = {
   getConversationMessages,
   createMessage,
+  markMessageAsDelivered,
+  markMessageAsRead,
+  markConversationAsRead,
   markDeliveredForUsers,
   getParticipantIds,
 };

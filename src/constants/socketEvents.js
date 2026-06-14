@@ -9,4 +9,7 @@ module.exports = {
   MESSAGE_SEND: 'message:send',
   MESSAGE_NEW: 'message:new',
   MESSAGE_DELIVERED: 'message:delivered',
+  MESSAGE_READ: 'message:read',
+  MESSAGE_READ_UPDATE: 'message:read:update',
+  CONVERSATION_READ: 'conversation:read',
 };

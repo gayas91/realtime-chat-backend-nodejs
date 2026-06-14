@@ -1,6 +1,7 @@
 const express = require('express');
 
 const conversationController = require('../controllers/conversation.controller');
+const messageController = require('../controllers/message.controller');
 const { authenticate } = require('../middlewares/auth.middleware');
 const validate = require('../middlewares/validate.middleware');
 const conversationValidator = require('../validators/conversation.validator');
@@ -25,6 +26,11 @@ router.get(
   '/:conversationId',
   validate(conversationValidator.conversationIdParamSchema),
   conversationController.getConversation
+);
+router.post(
+  '/:conversationId/read',
+  validate(conversationValidator.conversationIdParamSchema),
+  messageController.markConversationAsRead
 );
 router.use('/:conversationId/messages', messageRoutes);
 
