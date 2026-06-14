@@ -24,8 +24,18 @@ const createMessageSchema = Joi.object({
   }).required(),
 }).unknown(true);
 
+const updateMessageSchema = Joi.object({
+  params: Joi.object({
+    messageId: objectId.required(),
+  }).required(),
+  body: Joi.object({
+    content: Joi.string().trim().min(1).max(5000).required(),
+  }).required(),
+}).unknown(true);
+
 module.exports = {
   conversationIdParamSchema,
   messageIdParamSchema,
   createMessageSchema,
+  updateMessageSchema,
 };

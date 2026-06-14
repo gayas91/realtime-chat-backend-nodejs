@@ -35,6 +35,48 @@ const createMessage = async (conversationId, senderId, { content, type = 'text' 
   return populateMessage(Message.findById(message.id));
 };
 
+const ensureEditableMessage = async (messageId, userId) => {
+  const message = await Message.findById(messageId);
+
+  if (!message) {
+    throw new ApiError(404, 'Message not found');
+  }
+
+  if (message.senderId.toString() !== userId) {
+    throw new ApiError(403, 'Only the sender can modify this message');
+  }
+
+  if (message.isDeleted) {
+    throw new ApiError(400, 'Message is already deleted');
+  }
+
+  return message;
+};
+
+const editMessage = async (messageId, userId, { content }) => {
+  const message = await ensureEditableMessage(messageId, userId);
+
+  if (message.type !== 'text') {
+    throw new ApiError(400, 'Only text messages can be edited');
+  }
+
+  message.content = content;
+  message.editedAt = new Date();
+  await message.save();
+
+  return populateMessage(Message.findById(message.id));
+};
+
+const deleteMessage = async (messageId, userId) => {
+  const message = await ensureEditableMessage(messageId, userId);
+
+  message.isDeleted = true;
+  message.content = 'This message was deleted';
+  await message.save();
+
+  return populateMessage(Message.findById(message.id));
+};
+
 const hasEveryoneExceptSender = (participantIds, senderId, userIds) => {
   const trackedUserIds = new Set(userIds.map((userId) => userId.toString()));
 
@@ -173,6 +215,8 @@ const getParticipantIds = (conversation) =>
 module.exports = {
   getConversationMessages,
   createMessage,
+  editMessage,
+  deleteMessage,
   markMessageAsDelivered,
   markMessageAsRead,
   markConversationAsRead,

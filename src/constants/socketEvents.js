@@ -12,6 +12,10 @@ module.exports = {
   MESSAGE_READ: 'message:read',
   MESSAGE_READ_UPDATE: 'message:read:update',
   CONVERSATION_READ: 'conversation:read',
+  MESSAGE_EDIT: 'message:edit',
+  MESSAGE_DELETE: 'message:delete',
+  MESSAGE_UPDATED: 'message:updated',
+  MESSAGE_DELETED: 'message:deleted',
   TYPING_START: 'typing:start',
   TYPING_STOP: 'typing:stop',
 };

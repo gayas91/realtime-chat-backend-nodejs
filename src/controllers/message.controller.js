@@ -29,6 +29,30 @@ const createMessage = asyncHandler(async (req, res) => {
   });
 });
 
+const editMessage = asyncHandler(async (req, res) => {
+  const message = await messageService.editMessage(req.params.messageId, req.user.id, {
+    content: req.body.content,
+  });
+
+  res.status(200).json({
+    success: true,
+    data: {
+      message,
+    },
+  });
+});
+
+const deleteMessage = asyncHandler(async (req, res) => {
+  const message = await messageService.deleteMessage(req.params.messageId, req.user.id);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      message,
+    },
+  });
+});
+
 const markMessageAsRead = asyncHandler(async (req, res) => {
   const message = await messageService.markMessageAsRead(req.params.messageId, req.user.id);
 
@@ -55,6 +79,8 @@ const markConversationAsRead = asyncHandler(async (req, res) => {
 module.exports = {
   getMessages,
   createMessage,
+  editMessage,
+  deleteMessage,
   markMessageAsRead,
   markConversationAsRead,
 };

@@ -17,6 +17,11 @@ const messageStatusSchema = Joi.object({
   messageId: Joi.string().hex().length(24).required(),
 });
 
+const messageEditSchema = Joi.object({
+  messageId: Joi.string().hex().length(24).required(),
+  content: Joi.string().trim().min(1).max(5000).required(),
+});
+
 const conversationReadSchema = Joi.object({
   conversationId: Joi.string().hex().length(24).required(),
 });
@@ -125,6 +130,82 @@ const registerMessageHandlers = (io, socket) => {
       }
     } catch (error) {
       logger.error('Failed to mark socket message delivered', {
+        socketId: socket.id,
+        userId,
+        messageId: payload?.messageId,
+        message: error.message,
+        stack: error.stack,
+      });
+
+      if (typeof callback === 'function') {
+        callback({
+          success: false,
+          message: error.message,
+        });
+      }
+    }
+  });
+
+  socket.on(socketEvents.MESSAGE_EDIT, async (payload, callback) => {
+    try {
+      const value = validatePayload(messageEditSchema, payload);
+      const message = await messageService.editMessage(value.messageId, userId, {
+        content: value.content,
+      });
+      const conversationId = message.conversationId.toString();
+
+      io.to(getConversationRoom(conversationId)).emit(socketEvents.MESSAGE_UPDATED, {
+        conversationId,
+        message,
+      });
+
+      if (typeof callback === 'function') {
+        callback({
+          success: true,
+          data: {
+            message,
+          },
+        });
+      }
+    } catch (error) {
+      logger.error('Failed to edit socket message', {
+        socketId: socket.id,
+        userId,
+        messageId: payload?.messageId,
+        message: error.message,
+        stack: error.stack,
+      });
+
+      if (typeof callback === 'function') {
+        callback({
+          success: false,
+          message: error.message,
+        });
+      }
+    }
+  });
+
+  socket.on(socketEvents.MESSAGE_DELETE, async (payload, callback) => {
+    try {
+      const value = validatePayload(messageStatusSchema, payload);
+      const message = await messageService.deleteMessage(value.messageId, userId);
+      const conversationId = message.conversationId.toString();
+
+      io.to(getConversationRoom(conversationId)).emit(socketEvents.MESSAGE_DELETED, {
+        conversationId,
+        message,
+      });
+
+      if (typeof callback === 'function') {
+        callback({
+          success: true,
+          data: {
+            message,
+          },
+        });
+      }
+    } catch (error) {
+      logger.error('Failed to delete socket message', {
         socketId: socket.id,
         userId,
         messageId: payload?.messageId,

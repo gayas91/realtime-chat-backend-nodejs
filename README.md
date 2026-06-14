@@ -405,6 +405,68 @@ typing:{conversationId}:{userId} = true
 TTL 5 seconds
 ```
 
+## Message Edit And Delete
+
+Message edit and delete APIs require:
+
+```http
+Authorization: Bearer jwt-access-token
+```
+
+Edit a message:
+
+```http
+PATCH /api/v1/messages/MESSAGE_ID
+Content-Type: application/json
+
+{
+  "content": "Updated message"
+}
+```
+
+Only the sender can edit their own non-deleted text messages. The server updates `editedAt`.
+
+Soft delete a message:
+
+```http
+DELETE /api/v1/messages/MESSAGE_ID
+```
+
+Only the sender can delete their own message. The server sets `isDeleted = true` and replaces content with:
+
+```text
+This message was deleted
+```
+
+Socket edit:
+
+```js
+socket.emit(
+  'message:edit',
+  {
+    messageId: 'MESSAGE_ID',
+    content: 'Updated message',
+  },
+  console.log
+);
+
+socket.on('message:updated', console.log);
+```
+
+Socket delete:
+
+```js
+socket.emit(
+  'message:delete',
+  {
+    messageId: 'MESSAGE_ID',
+  },
+  console.log
+);
+
+socket.on('message:deleted', console.log);
+```
+
 ## Current Scope
 
 Included:
@@ -428,11 +490,16 @@ Included:
 - Basic realtime message delivery
 - Delivered and read receipts
 - Socket.IO typing indicators
+- Message edit and soft delete
 
 Not included yet:
 
 - File uploads
-- Message edit
-- Message delete
+- Delete for me
+- Edit history
+- Attachments
+- Moderation
+- Admin delete
+- Time limits for edit or delete
 - Advanced group admin management
 - Push notifications
