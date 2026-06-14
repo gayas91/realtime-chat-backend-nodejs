@@ -2,7 +2,7 @@
 
 Recruiter-grade backend scaffold for a realtime chat system. Phase 1 establishes the production-oriented foundation only: Express, environment configuration, MongoDB, Redis, Winston logging, validation plumbing, centralized errors, health checks, and Docker support.
 
-Authentication, chat features, Socket.IO events, and business logic are intentionally not implemented in this phase.
+Authentication and Socket.IO presence foundation are available. Chat messages, conversations, groups, read receipts, and typing indicators are intentionally not implemented yet.
 
 ## Tech Stack
 
@@ -103,7 +103,86 @@ Example response:
 - `npm run format` - format files with Prettier
 - `npm run format:check` - check formatting
 
-## Phase 1 Scope
+## Socket.IO Realtime Foundation
+
+Socket.IO is attached to the existing HTTP server and uses the same CORS configuration as Express.
+
+Clients must authenticate with a valid JWT access token:
+
+```js
+import { io } from 'socket.io-client';
+
+const socket = io('http://localhost:5001', {
+  auth: {
+    token: 'jwt-access-token',
+  },
+});
+```
+
+The token must be sent in:
+
+```text
+socket.handshake.auth.token
+```
+
+Connections are rejected when the token is missing, invalid, expired, or belongs to an inactive user.
+
+### Socket Events
+
+- `connection` - authenticated socket connection
+- `disconnect` - socket disconnect cleanup
+- `user:online` - emitted when a user transitions online
+- `user:offline` - emitted when a user has no remaining active sockets
+- `presence:get` - fetch online/offline status for user IDs
+
+### Presence Flow
+
+Redis keys:
+
+```text
+presence:user:{userId} -> online
+user:sockets:{userId} -> Set of socket IDs
+```
+
+On connect:
+
+- Add `socket.id` to `user:sockets:{userId}`
+- Set `presence:user:{userId}` to `online`
+- Emit `user:online` when the first socket for that user connects
+
+On disconnect:
+
+- Remove `socket.id` from `user:sockets:{userId}`
+- If no sockets remain, delete `presence:user:{userId}`
+- Emit `user:offline`
+
+Get presence:
+
+```js
+socket.emit(
+  'presence:get',
+  {
+    userIds: ['id1', 'id2'],
+  },
+  (response) => {
+    console.log(response);
+  }
+);
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id1": "online",
+    "id2": "offline"
+  }
+}
+```
+
+## Current Scope
 
 Included:
 
@@ -118,12 +197,15 @@ Included:
 - Health-check endpoint
 - Dockerfile and Docker Compose
 - ESLint and Prettier setup
+- JWT authentication APIs
+- Socket.IO JWT authentication
+- Redis-backed user presence
 
 Not included yet:
 
-- Authentication
-- Authorization
-- User models
 - Chat models
-- Socket.IO server/events
-- Business logic
+- Message sending
+- Conversation rooms
+- Read receipts
+- Typing indicators
+- Group chat

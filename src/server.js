@@ -4,14 +4,17 @@ const app = require('./app');
 const config = require('./config/env');
 const { connectMongoDB, disconnectMongoDB } = require('./config/database');
 const { connectRedis, disconnectRedis } = require('./config/redis');
+const initializeSocketServer = require('./sockets');
 const logger = require('./utils/logger');
 
 const server = http.createServer(app);
+let io;
 
 const startServer = async () => {
   try {
     await connectMongoDB();
     await connectRedis();
+    io = initializeSocketServer(server);
 
     server.listen(config.port, () => {
       logger.info(`${config.appName} listening on port ${config.port}`);
@@ -27,6 +30,9 @@ const shutdown = async (signal) => {
 
   server.close(async () => {
     try {
+      if (io) {
+        io.close();
+      }
       await disconnectRedis();
       await disconnectMongoDB();
       logger.info('Shutdown complete');
